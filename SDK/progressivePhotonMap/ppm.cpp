@@ -1292,7 +1292,7 @@ void ProgressivePhotonScene::initGeometryInstances(InitialCameraData& camera_dat
 
 void ProgressivePhotonScene::initScene( InitialCameraData& camera_data )
 {
-	cout << "Begin to init GAPPM context...\n";
+	cout << "Begin to init SPPM context...\n";
 
 	initGlobal();
 	initEnterPointRayTrace(camera_data);
@@ -1301,19 +1301,6 @@ void ProgressivePhotonScene::initScene( InitialCameraData& camera_data )
 	initEnterPointGlobalGather();
 	initEnterPointCausticsGather();
 	initGeometryInstances(camera_data);
-
-	/*
-	/// Prepare to run
-	m_context->launch(0, 0);
-
-	int m_cuda_device = OptiXDeviceToCUDADevice( m_context, 0 );
-	
-	if ( m_cuda_device < 0 ) {
-		std::cerr << "OptiX device 0 must be a valid CUDA device number.\n";
-		exit(1);
-	}
-    cudaSetDevice(m_cuda_device);
-	*/
 	m_context->validate();
 	m_context->compile();
 
@@ -2162,7 +2149,6 @@ void ProgressivePhotonScene::regenerate_area(RTsize buffer_width, RTsize buffer_
 void ProgressivePhotonScene::trace( const RayGenCameraData& camera_data )
 {
 	double tstart, tend;
-	std::cerr << "Pass :" << m_frame_number << std::endl;
 	sutilCurrentTime(&tstart);
 
 	double t0, t1;
@@ -2187,7 +2173,6 @@ void ProgressivePhotonScene::trace( const RayGenCameraData& camera_data )
 	m_frame_number = m_camera_changed ? 0u : m_frame_number+1;
 	m_context["frame_number"]->setFloat( static_cast<float>(m_frame_number) );
 
-	std::cout << camera_data.eye.x << " " << camera_data.eye.y << " " << camera_data.eye.z << endl;
 	if ( m_camera_changed ) 
 	{
 		m_camera_changed = false;
@@ -2295,7 +2280,7 @@ void ProgressivePhotonScene::trace( const RayGenCameraData& camera_data )
 
 	sutilCurrentTime(&tend);
 
-	std::cerr << "Pass :" << m_frame_number << " use " << tend - tstart << std::endl;
+	std::cerr << "Pass :" << m_frame_number << " cost :" << tend - tstart << std::endl;
 }
 
 
@@ -2590,6 +2575,7 @@ int main( int argc, char** argv )
 	bool display_debug_buffer = false;
 	bool cornell_box = false;
 	float timeout = -1.0f;
+
 	std::string model = "box";
 
 	for ( int i = 1; i < argc; ++i ) {
@@ -2622,12 +2608,12 @@ int main( int argc, char** argv )
 			printUsageAndExit( argv[0] );
 		}
 	}
+	
+	// if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );  // Êä³ö°ïÖúÐÅÏ¢
 
-	if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );
+	if (timeout < 0.0) timeout = 11;
 
 	try {
-		double tbegin, tlast;
-		sutilCurrentTime(&tbegin);
 		ProgressivePhotonScene scene;
 		if (print_timings) scene.printTimings();
 		if (display_debug_buffer) scene.displayDebugBuffer();
@@ -2637,8 +2623,6 @@ int main( int argc, char** argv )
 		GLUTDisplay::setProgressiveDrawingTimeout(timeout);
 		GLUTDisplay::setUseSRGB(true);
 		GLUTDisplay::run( "ProgressivePhotonScene", &scene, GLUTDisplay::CDProgressive );
-		sutilCurrentTime(&tlast);
-		cout << "total Time : " << tlast - tbegin << endl;
 	} catch( Exception& e ){
 		sutilReportError( e.getErrorString().c_str() );
 		exit(1);

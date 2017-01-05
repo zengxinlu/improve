@@ -844,6 +844,11 @@ void GLUTDisplay::displayFrame()
 
 void GLUTDisplay::display()
 {
+	if (m_cur_continuous_mode == CDNone) {
+		sutilDisplayFilePPM("output.ppm", m_scene->getOutputBuffer()->get());
+		quit();
+	}
+
 	if(m_cur_continuous_mode == CDProgressive && m_progressive_timeout > 0.0 ) {
 		// If doing progressive refinement, see if we're done
 		double current_time;
@@ -959,9 +964,16 @@ void GLUTDisplay::display()
 		}
 	}
 
-	{nvtx::ScopedRange r( "glutSwapBuffers" );
-	// Swap buffers
-	glutSwapBuffers();
+	{
+		double current_time;
+		sutilCurrentTime(&current_time);
+		printf("Total Time: %.6lf\n", current_time - m_start_time);
+	}
+
+	{
+		nvtx::ScopedRange r( "glutSwapBuffers" );
+		// Swap buffers
+		glutSwapBuffers();
 	}
 }
 

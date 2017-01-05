@@ -1,2 +1,2 @@
-a = imread('.\SDK-Build\progressivePhotonMap\1.ppm');
+a = imread('..\SDK-Build\progressivePhotonMap\output.ppm');
 imshow(a);
