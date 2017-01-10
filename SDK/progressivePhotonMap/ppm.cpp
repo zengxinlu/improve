@@ -951,11 +951,7 @@ void ProgressivePhotonScene::initSibenik(InitialCameraData& camera_data)
 }
 void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
 {
-	/// 		camera_data = InitialCameraData( make_float3( -0.6f, 0.0f, 0.0f ), /// eye
-	/// 			make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-	/// 			make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-	/// 			35.0f );                              /// vfov
-	///camera_data = InitialCameraData( make_float3( -0.6f, -0.05f, 0.0f ), /// eye
+	//camera_data = InitialCameraData( make_float3( -0.6f, -0.05f, 0.0f ), /// eye
 	camera_data = InitialCameraData( make_float3( -0.24178f, -0.133496f, 2.43055f ), /// eye
 	//camera_data = InitialCameraData( make_float3( -1.12526f, -0.306863f, 2.0142f ), /// eye
 		make_float3( 0.0f, -0.05f, 0.25f ),      /// lookat
@@ -971,18 +967,19 @@ void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
 	m_light.direction = make_float3( 0.0f, -1.0f, 0.0f );
 	m_light.position = m_light.anchor - m_light.direction * 0.00001f;
 
-	float point_size = 0.02f * 0.1;
-	///float point_size = 0.15f;
-	///float point_size = 0.05f;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size * 2;
-	m_light.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size;
+	if (m_light.is_area_light) {
+		float point_size = 0.02f * 0.1;
+		//float point_size = 0.15f;
+		//float point_size = 0.05f;
+		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size * 2;
+		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
 
-	float3 m_light_t_normal;
-	m_light_t_normal = cross(m_light.v1, m_light.direction);
-	m_light.v1 = cross(m_light.direction, m_light_t_normal);
-	m_light_t_normal = cross(m_light.v2, m_light.direction);
-	m_light.v2 = cross(m_light.direction, m_light_t_normal);
-
+		float3 m_light_t_normal;
+		m_light_t_normal = cross(m_light.v1, m_light.direction);
+		m_light.v1 = cross(m_light.direction, m_light_t_normal);
+		m_light_t_normal = cross(m_light.v2, m_light.direction);
+		m_light.v2 = cross(m_light.direction, m_light_t_normal);
+	}
 	m_light.radius    = 2.0f * 0.01745329252f;
 	//m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
 	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
