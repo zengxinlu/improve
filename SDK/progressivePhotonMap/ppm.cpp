@@ -238,6 +238,7 @@ static char* TestSceneNames[] = {
 	"Box_Scene",
 	"Sibenik_Scene",
 	"Torus_Scene"
+	"EChess_Scene"
 };
 class ProgressivePhotonScene : public SampleScene
 {
@@ -261,8 +262,9 @@ public:
 		if (model == "wedding_ring") 	setTestScene(ProgressivePhotonScene::Wedding_Ring_Scene);
 		if (model == "conference")		setTestScene(ProgressivePhotonScene::Conference_Scene);
 		if (model == "sponza")			setTestScene(ProgressivePhotonScene::Sponza_Scene);
-		if (model == "small_room")		setTestScene(ProgressivePhotonScene::Small_Room_Scene);
+		if (model == "smallroom")		setTestScene(ProgressivePhotonScene::Small_Room_Scene);
 		if (model == "clock")			setTestScene(ProgressivePhotonScene::Clock_Scene);
+		if (model == "echess")			setTestScene(ProgressivePhotonScene::EChess_Scene);
 	}	
 
 	/// From SampleScene
@@ -296,7 +298,7 @@ public:
 		Triangle_Extend_Method,
 		Triangle_Combine_Method
 	};
-	enum TestScene{
+	enum TestScene {
 		Cornel_Box_Scene = 0,
 		Wedding_Ring_Scene,
 		Small_Room_Scene,
@@ -305,7 +307,8 @@ public:
 		Sponza_Scene,
 		Box_Scene,
 		Sibenik_Scene,
-		Torus_Scene
+		Torus_Scene,
+		EChess_Scene,
 	};
 private:
 	void initWeddingRing(InitialCameraData& camera_data);
@@ -317,6 +320,7 @@ private:
 	void initBox(InitialCameraData& camera_data);
 	void initSibenik(InitialCameraData& camera_data);
 	void initTorus(InitialCameraData& camera_data);
+	void initEChess(InitialCameraData& camera_data);
 	void buildGlobalPhotonMap();
 	void buildCausticsPhotonMap();
 	void setFloatIn(std::vector<PhotonRecord*>& ptrVector, int ttindex, float mt_area);
@@ -572,6 +576,12 @@ bool ProgressivePhotonScene::keyPressed(unsigned char key, int x, int y)
 	return false;
 }
 
+/*
+	init model divide 3 step
+	1. init camera_data
+	2. init light
+	3. init radius
+*/
 void ProgressivePhotonScene::initAssistBuffer()
 {
 	m_context["can_count_kernel"]->setFloat( 1.0f );
@@ -830,58 +840,72 @@ void ProgressivePhotonScene::initSmallRoom(InitialCameraData& camera_data)
 	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
 	m_context["max_radius2"]->setFloat(default_radius2);
 	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/EChess/EChess.obj", aabb, true);
+	loadObjGeometry( "scenes/smallroom/smallroom.obj", aabb, true);
 
+}
+void ProgressivePhotonScene::initEChess(InitialCameraData& camera_data) {
+	camera_data = InitialCameraData(make_float3(0.0583623f, -0.0303101f, 0.207887f), /// eye
+		make_float3(0.0f, 0.0f, 0.0f),      /// lookat
+		make_float3(0.0f, 0.0f, 1.0f),     /// up
+		35.0f);                              /// vfov
+
+	m_light.is_area_light = 1;
+	m_light.position = make_float3(0.0f, 0.f, 0.2401f);
+	m_light.anchor = make_float3(0.0f, 0.f, 0.24f);
+	m_light.direction = normalize(m_light.anchor - m_light.position);
+	if (m_light.is_area_light) {
+		float point_size = 0.11f;
+		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size;
+		m_light.v2 = make_float3(0.0f, 1.f, 0.0f) * point_size;
+
+		float3 m_light_t_normal;
+		m_light_t_normal = cross(m_light.v1, m_light.direction);
+		m_light.v1 = cross(m_light.direction, m_light_t_normal);
+		m_light_t_normal = cross(m_light.v2, m_light.direction);
+		m_light.v2 = cross(m_light.direction, m_light_t_normal);
+	}
+	m_light.radius = 0.1f * 0.01745329252f;
+	m_light.power = make_float3(1.0f, 1.0f, 1.0f);
+	m_context["light"]->setUserData(sizeof(PPMLight), &m_light);
+
+	float default_radius2 = 0.0001f;
+	m_context["rtpass_default_radius2"]->setFloat(default_radius2);
+	m_context["max_radius2"]->setFloat(default_radius2);
+	optix::Aabb aabb;
+	loadObjGeometry("scenes/EChess/EChess.obj", aabb, true);
 }
 void ProgressivePhotonScene::initTorus(InitialCameraData& camera_data)
 {
-/// 	/// Current Mr Li
-/// 	camera_data = InitialCameraData( make_float3( 0.6611862, 0.0602775, 1.07347 ), /// eye
-/// 		make_float3(0, -0.35, 0 ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		30.0f );                              /// vfov
-	/// Current Myron
-	///camera_data = InitialCameraData( make_float3( 1.00206, 0.142032, 1.5627 ), /// eye
-	camera_data = InitialCameraData( make_float3( 0.93709, 0.068026, 1.17512 ), /// eye
+	camera_data = InitialCameraData( make_float3(0.93709, 0.068026, 1.17512), /// eye
 		make_float3(0, -0.35, 0 ),      /// lookat
 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
 		30.0f );                              /// vfov
 
-
-
-	m_light.is_area_light = 0; 
-	m_light.position = make_float3( 0.f, 0.f, 0.0f );	
-
 	m_light.is_area_light = 1; 
-	float point_size = 0.01f;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size;
-	m_light.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size;
-
-	///m_light.position = make_float3( 1.5, 1.05, -0.2 )/2;			/// Current Mr Li
-	m_light.position = make_float3( 0.25, 0.125, -0.2 );			/// Current Myron
-	m_light.position = make_float3( 0.25, 0.125, -0.2 );			/// Current Myron2
-
-	m_light.direction = normalize( m_light_target  - m_light.position );
+	m_light.position = make_float3(0.25, 0.125, -0.2);			/// Current Myron
+	m_light.direction = normalize(make_float3(0, -0.3, 0) - m_light.position);
 	m_light.anchor = m_light.position + m_light.direction * 0.01f;
 
-	float3 m_light_t_normal;
-	m_light_t_normal = cross(m_light.v1, m_light.direction);
-	m_light.v1 = cross(m_light.direction, m_light_t_normal);
-	m_light.v2 = cross(m_light.direction, m_light.v1);
+	if (m_light.is_area_light) {
+		float point_size = 0.01f;
+		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size;
+		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
+
+		float3 m_light_t_normal;
+		m_light_t_normal = cross(m_light.v1, m_light.direction);
+		m_light.v1 = cross(m_light.direction, m_light_t_normal);
+		m_light.v2 = cross(m_light.direction, m_light.v1);
+	}
 
 	m_light.radius    = 2.0f * 0.01745329252f;
 	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
 	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
 
-	//float default_radius2 = 0.004f;
 	float default_radius2 = 0.0001f;
-	//float default_radius2 = 0.00004f;
 	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
 	m_context["max_radius2"]->setFloat(default_radius2);
 	optix::Aabb aabb;	
 	loadObjGeometry( "scenes/torus/torus_maya.obj", aabb, true);
-	//loadObjGeometry( "scenes/torus/torus.obj", aabb, true);
-	///loadObjGeometry( "scenes/torus/torus_maya_o.obj", aabb, true);
 }
 void ProgressivePhotonScene::initSibenik(InitialCameraData& camera_data)
 {
@@ -951,26 +975,17 @@ void ProgressivePhotonScene::initSibenik(InitialCameraData& camera_data)
 }
 void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
 {
-	//camera_data = InitialCameraData( make_float3( -0.6f, -0.05f, 0.0f ), /// eye
-	camera_data = InitialCameraData( make_float3( -0.24178f, -0.133496f, 2.43055f ), /// eye
-	//camera_data = InitialCameraData( make_float3( -1.12526f, -0.306863f, 2.0142f ), /// eye
+	camera_data = InitialCameraData( make_float3(-0.24178, -0.133496, 2.43055), /// eye
 		make_float3( 0.0f, -0.05f, 0.25f ),      /// lookat
 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
 		35.0f );                              /// vfov
 	m_light.is_area_light = 1; 
- 	/*m_light.position = make_float3( 0.0f, 0.1f, 0.0f );
- 	m_light.anchor = make_float3( 0.0f, 0.0f, 0.0f );
- 	m_light.direction = normalize( m_light.anchor - m_light.position );*/
-
-	//m_light.anchor = make_float3( -0.347817638160084, 0.4, 0.423288304095876 );
 	m_light.anchor = make_float3( 0.323573717848716, 0.41, 0.494796481472676 );
 	m_light.direction = make_float3( 0.0f, -1.0f, 0.0f );
 	m_light.position = m_light.anchor - m_light.direction * 0.00001f;
 
 	if (m_light.is_area_light) {
 		float point_size = 0.02f * 0.1;
-		//float point_size = 0.15f;
-		//float point_size = 0.05f;
 		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size * 2;
 		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
 
@@ -981,42 +996,10 @@ void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
 		m_light.v2 = cross(m_light.direction, m_light_t_normal);
 	}
 	m_light.radius    = 2.0f * 0.01745329252f;
-	//m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
 	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
 	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
 
-	/*
-	tmpLight.is_area_light = 1; 
- 	//m_light.position = make_float3( 0.0f, 0.1f, 0.0f );
- 	//m_light.anchor = make_float3( 0.0f, 0.0f, 0.0f );
- 	//m_light.direction = normalize( m_light.anchor - m_light.position );
-	
-	//tmpLight.anchor = make_float3( -0.347817638160084, 0.4, 0.423288304095876 );
-	tmpLight.anchor = make_float3( 0.323573717848716, 0.4, 0.494796481472676 );
-	tmpLight.direction = make_float3( 0.0f, -1.0f, 0.0f );
-	//m_light.position = m_light.anchor - m_light.direction * 0.00001f;
-
-	point_size = 0.02f;
-	///float point_size = 0.15f;
-	///float point_size = 0.05f;
-	tmpLight.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size * 2;
-	tmpLight.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size;
-
-	float3 tmpLight_t_normal;
-	tmpLight_t_normal = cross(tmpLight.v1, tmpLight.direction);
-	tmpLight.v1 = cross(tmpLight_t_normal, tmpLight_t_normal);
-	tmpLight_t_normal = cross(tmpLight.v2, tmpLight.direction);
-	tmpLight.v2 = cross(tmpLight_t_normal, tmpLight_t_normal);
-
-	tmpLight.radius    = 2.0f * 0.01745329252f;
-	//m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
-	tmpLight.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light2"]->setUserData( sizeof(PPMLight), &tmpLight );
-	*/
-
-	//float default_radius2 = 0.0001f;
 	float default_radius2 = 0.001f;
-	//float default_radius2 = 0.01f;
 	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
 	m_context["max_radius2"]->setFloat(default_radius2);
 	optix::Aabb aabb;	
@@ -1260,13 +1243,13 @@ void ProgressivePhotonScene::initEnterPointCausticsGather() {
 }
 void ProgressivePhotonScene::initGeometryInstances(InitialCameraData& camera_data) {
 		/// Populate scene hierarchy
-	if( m_test_scene == Wedding_Ring_Scene )
+	if (m_test_scene == Wedding_Ring_Scene)
 		initWeddingRing(camera_data);
-	else if( m_test_scene == Conference_Scene )
+	else if (m_test_scene == Conference_Scene)
 		initConference(camera_data);
-	else if( m_test_scene == Sponza_Scene )
+	else if (m_test_scene == Sponza_Scene)
 		initSponza(camera_data);
-	else if( m_test_scene == Clock_Scene )
+	else if (m_test_scene == Clock_Scene)
 		initClock(camera_data);
 	else if (m_test_scene == Cornel_Box_Scene)
 		initCornelBox(camera_data);
@@ -1278,6 +1261,8 @@ void ProgressivePhotonScene::initGeometryInstances(InitialCameraData& camera_dat
 		initSibenik(camera_data);
 	else if (m_test_scene == Torus_Scene)
 		initTorus(camera_data);
+	else if (m_test_scene == EChess_Scene)
+		initEChess(camera_data);
 
 	m_context["ambient_light"]->setFloat( 0.1f, 0.1f, 0.1f);
 	std::string full_path = std::string( sutilSamplesDir() ) + "/tutorial/data/CedarCity.hdr";

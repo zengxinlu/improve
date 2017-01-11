@@ -314,9 +314,9 @@ RT_PROGRAM void globalDensity()
 	float3 final_color = 
 		//direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
 		//(direct_flux + indirect_flux) * 2.f; 
-		//direct_flux + indirect_flux; 
-		//indirect_flux*15.f;// * 5.f;
-		//indirect_flux*5.f;// * 5.f;
+		direct_flux + indirect_flux * 8.f; 
+		//indirect_flux * 15.f;// * 5.f;
+		//indirect_flux * 5.f;// * 5.f;
 		//direct_flux * 1.f;
 		//direct_flux * 30.f;
 
@@ -326,7 +326,7 @@ RT_PROGRAM void globalDensity()
 		//direct_flux*0.8f + indirect_flux * 0.5f; // conference area light
 		//direct_flux*0.5f + indirect_flux * 1.f; // conference area light
 		//direct_flux*1.f + indirect_flux * 0.5f; // small_room
-		(direct_flux*1.f + indirect_flux * 30.0f) * 0.25f;				// box torus sibenik
+		//(direct_flux*1.f + indirect_flux * 30.0f) * 0.25f;				// box torus sibenik
 		//(direct_flux*1.f + indirect_flux * 2.f); // sibnik
 
 		//direct_flux*100.f;
@@ -821,7 +821,7 @@ RT_PROGRAM void globalDensity_cornel()
 	float3 final_color = 
 		//direct_flux + indirect_flux + ambient_light*rec_atten_Kd; 
 		//indirect_flux*15.f;// * 5.f;
-		//indirect_flux*5.f;// * 5.f;
+		indirect_flux * 5.f;// * 5.f;
 		//direct_flux * 1.f;
 		//direct_flux * 30.f;
 
@@ -832,7 +832,7 @@ RT_PROGRAM void globalDensity_cornel()
 		//direct_flux*0.5f + indirect_flux * 1.f; // conference area light
 		//direct_flux*1.f + indirect_flux * 0.5f; // sibnik
 		//(direct_flux*1.f + indirect_flux * 30.0f) * 0.25f; // box
-		(direct_flux*1.f + indirect_flux * 2.f); // sibnik
+		//(direct_flux*1.f + indirect_flux * 2.f); // sibnik
 
 		//direct_flux*100.f;
 		//direct_flux * 50.f + indirect_flux * 1.0f;
