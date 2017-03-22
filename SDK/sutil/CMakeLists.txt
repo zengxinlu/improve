@@ -155,6 +155,7 @@ target_link_libraries(sutil
   optix
   optixu
   cximage
+  libyaml
   ${GLUT_LIBRARIES}
   ${OPENGL_LIBRARIES}
   )

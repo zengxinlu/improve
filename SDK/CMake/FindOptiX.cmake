@@ -60,6 +60,7 @@ OPTIX_find_api_library(optixu 1)
 OPTIX_find_api_library(optix_prime 1)
 
 OPTIX_find_api_library(cximage 1)
+OPTIX_find_api_library(libyaml 1)
 
 # Include
 find_path(OptiX_INCLUDE
@@ -134,6 +135,7 @@ OptiX_add_imported_library(optixu   "${optixu_LIBRARY}"   "${optixu_DLL}"   "")
 OptiX_add_imported_library(optix_prime "${optix_prime_LIBRARY}"  "${optix_prime_DLL}"  "")
 
 OptiX_add_imported_library(cximage "${cximage_LIBRARY}"  "${cximage_DLL}"  "")
+OptiX_add_imported_library(libyaml "${libyaml_LIBRARY}"  "${libyaml_DLL}"  "")
 
 macro(OptiX_check_same_path libA libB)
   if(_optix_path_to_${libA})

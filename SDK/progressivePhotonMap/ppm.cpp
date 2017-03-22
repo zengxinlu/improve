@@ -29,6 +29,7 @@
 #include <sutil.h>
 
 using namespace optix;
+#include <yaml-cpp/yaml.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 
@@ -975,10 +976,17 @@ void ProgressivePhotonScene::initSibenik(InitialCameraData& camera_data)
 }
 void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
 {
-	camera_data = InitialCameraData( make_float3(-0.24178, -0.133496, 2.43055), /// eye
-		make_float3( 0.0f, -0.05f, 0.25f ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		35.0f );                              /// vfov
+	std::string full_path = std::string(sutilSamplesDir()) + "/progressivePhotonMap/" + "scenes/box/box.yaml";
+	YAML::Node modelConfig = YAML::LoadFile(full_path);
+	YAML::Node cameraData = modelConfig["camera_data"][0];
+	vector<double> eye = cameraData["eye"].as<vector<double> >();
+	vector<double> lookat = cameraData["lookat"].as<vector<double> >();
+	vector<double> up = cameraData["up"].as<vector<double> >();
+	double vfov = cameraData["vfov"].as<double>();
+	camera_data = InitialCameraData( make_float3( eye[0], eye[1], eye[2] ), /// eye
+		make_float3( lookat[0], lookat[1], lookat[2] ),      /// lookat
+		make_float3( up[0], up[1], up[2] ),     /// up
+		vfov );                              /// vfov
 	m_light.is_area_light = 1; 
 	m_light.anchor = make_float3( 0.323573717848716, 0.41, 0.494796481472676 );
 	m_light.direction = make_float3( 0.0f, -1.0f, 0.0f );
@@ -2593,7 +2601,7 @@ int main( int argc, char** argv )
 	
 	// if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );  //  ‰≥ˆ∞Ô÷˙–≈œ¢
 
-	if (timeout < 0.0) timeout = 11;
+	if (timeout < 0.0) timeout = 1000;
 
 	try {
 		ProgressivePhotonScene scene;
