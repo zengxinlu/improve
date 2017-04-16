@@ -244,6 +244,7 @@ static char* TestSceneNames[] = {
 class ProgressivePhotonScene : public SampleScene
 {
 public:
+	std::string m_model;
 	ProgressivePhotonScene() : SampleScene()
 		, m_frame_number( 0 )
 		, m_display_debug_buffer( false )
@@ -252,6 +253,7 @@ public:
 		, m_light_phi( 2.19f )
 		, m_light_theta( 1.15f )
 		, m_split_choice(LongestDim)
+		, m_model('box')
 	{}
 
 	void selectScene(std::string model)
@@ -266,6 +268,7 @@ public:
 		if (model == "smallroom")		setTestScene(ProgressivePhotonScene::Small_Room_Scene);
 		if (model == "clock")			setTestScene(ProgressivePhotonScene::Clock_Scene);
 		if (model == "echess")			setTestScene(ProgressivePhotonScene::EChess_Scene);
+		m_model_file = std::string(sutilSamplesDir()) + "/progressivePhotonMap/scenes/" + model + "/" + model + ".yaml";
 	}	
 
 	/// From SampleScene
@@ -322,6 +325,7 @@ private:
 	void initSibenik(InitialCameraData& camera_data);
 	void initTorus(InitialCameraData& camera_data);
 	void initEChess(InitialCameraData& camera_data);
+	void loadScene(std::string &filename);
 	void buildGlobalPhotonMap();
 	void buildCausticsPhotonMap();
 	void setFloatIn(std::vector<PhotonRecord*>& ptrVector, int ttindex, float mt_area);
@@ -464,7 +468,7 @@ void mprintf(float3 &tempfloat3)
 	std::cerr<< tempfloat3.x << ", " << tempfloat3.y << ", " << tempfloat3.z;
 }
 
-// ½«lightµÄÎ»ÖÃÒÆ¶¯Î¢Ð¡¾àÀë£¬È»ºó¸üÐÂ¹âÔ´
+// ï¿½ï¿½lightï¿½ï¿½Î»ï¿½ï¿½ï¿½Æ¶ï¿½Î¢Ð¡ï¿½ï¿½ï¿½ë£¬È»ï¿½ï¿½ï¿½ï¿½ï¿½Â¹ï¿½Ô´
 void updateLight(PPMLight &light, float3 dis_float3)
 {
 	light.position += dis_float3;
@@ -514,16 +518,16 @@ bool ProgressivePhotonScene::keyPressed(unsigned char key, int x, int y)
 		light_changed = true;
 		break;
 	case '0':
-		// ±ê¼ÇÕÕÏà»ú£¬ÖØ»æÍ¼Ïñ
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø»ï¿½Í¼ï¿½ï¿½
 		m_camera_changed = true;
 		break;
 	case 'p':
-		// Êä³öµ±Ç°Í¼Ïñµ½screengrabÄ¿Â¼
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°Í¼ï¿½ï¿½ï¿½ï¿½screengrabÄ¿Â¼
 		m_print_image = true;
 		std::cerr << "we print an image" << std::endl;
 		break;
 	case ']':
-		// Êä³öµ±Ç°ÕÕÏà»úÊý¾Ý
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		m_print_camera = true;
 		break;
 	case '.':
@@ -531,7 +535,7 @@ bool ProgressivePhotonScene::keyPressed(unsigned char key, int x, int y)
 		m_context["rtpass_output_buffer"]->getBuffer()->getSize( buffer_width, buffer_height );
 		regenerate_area(buffer_width, buffer_height, "press '.'");
 		break;
-	// u,i,h,j,k,l¸Ä±ä¹âÔ´Î»ÖÃ
+	// u,i,h,j,k,lï¿½Ä±ï¿½ï¿½ï¿½Ô´Î»ï¿½ï¿½
 	case 'u':
 		updateLight(m_light, make_float3(light_step_size, 0, 0));
 		m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
@@ -631,6 +635,45 @@ void ProgressivePhotonScene::initAssistBuffer()
 	m_area_normal_record = NULL;
 	m_area_record = NULL;
 	regenerate_area(WIDTH, HEIGHT, "init scene");
+}
+
+void ProgressivePhotonScene::loadScene() {
+	YAML::Node modelConfig = YAML::LoadFile(m_model_file);
+	YAML::Node cameraData = modelConfig["camera_data"][0];
+	vector<double> eye = cameraData["eye"].as<vector<double> >();
+	vector<double> lookat = cameraData["lookat"].as<vector<double> >();
+	vector<double> up = cameraData["up"].as<vector<double> >();
+	double vfov = cameraData["vfov"].as<double>();
+	camera_data = InitialCameraData( make_float3( eye[0], eye[1], eye[2] ), /// eye
+		make_float3( lookat[0], lookat[1], lookat[2] ),      /// lookat
+		make_float3( up[0], up[1], up[2] ),     /// up
+		vfov );                              /// vfov
+	m_light.is_area_light = 1; 
+	m_light.anchor = make_float3( 0.323573717848716, 0.41, 0.494796481472676 );
+	m_light.direction = make_float3( 0.0f, -1.0f, 0.0f );
+	m_light.position = m_light.anchor - m_light.direction * 0.00001f;
+
+	if (m_light.is_area_light) {
+		float point_size = 0.02f * 0.1;
+		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size * 2;
+		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
+
+		float3 m_light_t_normal;
+		m_light_t_normal = cross(m_light.v1, m_light.direction);
+		m_light.v1 = cross(m_light.direction, m_light_t_normal);
+		m_light_t_normal = cross(m_light.v2, m_light.direction);
+		m_light.v2 = cross(m_light.direction, m_light_t_normal);
+	}
+	m_light.radius    = 2.0f * 0.01745329252f;
+	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
+	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
+
+	float default_radius2 = 0.001f;
+	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
+	m_context["max_radius2"]->setFloat(default_radius2);
+	optix::Aabb aabb;	
+	loadObjGeometry( "scenes/box/box.obj", aabb, true);
+
 }
 void ProgressivePhotonScene::initConference(InitialCameraData& camera_data)
 {
@@ -1435,7 +1478,7 @@ bool cmpPhotonRecord (const PhotonRecord * a, const PhotonRecord *b)
 	return a->pad.z < b->pad.z;
 }
 
-// ÔÚCPU¶Ë¼ÆËãvoronoiµ¥Ôª¸ñÃæ»ý£¬²¢´´½¨¹â×ÓÍ¼µÄKD-tree
+// ï¿½ï¿½CPUï¿½Ë¼ï¿½ï¿½ï¿½voronoiï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¼ï¿½ï¿½KD-tree
 void ProgressivePhotonScene::buildGlobalPhotonMap()
 {
 	double t0, t1;
@@ -2314,7 +2357,7 @@ void ProgressivePhotonScene::doResize( unsigned int width, unsigned int height )
 	image_rnd_seeds->unmap();
 }
 
-// ´´½¨¾ØÐÎGeometryInstance
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½GeometryInstance
 GeometryInstance ProgressivePhotonScene::createParallelogram( const float3& anchor,
 	const float3& offset1,
 	const float3& offset2,
@@ -2343,7 +2386,7 @@ GeometryInstance ProgressivePhotonScene::createParallelogram( const float3& anch
 		&m_material,
 		&m_material+1 );
 
-	//ÉèÖÃ²ÄÖÊ
+	//ï¿½ï¿½ï¿½Ã²ï¿½ï¿½ï¿½
 	gi[ "emissive" ]->setFloat( 0.0f, 0.0f, 0.0f );
 	gi[ "phong_exp" ]->setFloat( 32.0f );
 	gi[ "reflectivity" ]->setFloat( 0.3f, 0.3f, 0.3f );
@@ -2599,7 +2642,7 @@ int main( int argc, char** argv )
 		}
 	}
 	
-	// if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );  // Êä³ö°ïÖúÐÅÏ¢
+	// if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 
 	if (timeout < 0.0) timeout = 1000;
 
