@@ -1,29 +1,3 @@
-/*
-* Copyright (c) 2008 - 2009 NVIDIA Corporation.  All rights reserved.
-*
-* NVIDIA Corporation and its licensors retain all intellectual property and proprietary
-* rights in and to this software, related documentation and any modifications thereto.
-* Any use, reproduction, disclosure or distribution of this software and related
-* documentation without an express license agreement from NVIDIA Corporation is strictly
-* prohibited.
-*
-* TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THIS SOFTWARE IS PROVIDED *AS IS*
-* AND NVIDIA AND ITS SUPPLIERS DISCLAIM ALL WARRANTIES, EITHER EXPRESS OR IMPLIED,
-* INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-* PARTICULAR PURPOSE.  IN NO EVENT SHALL NVIDIA OR ITS SUPPLIERS BE LIABLE FOR ANY
-* SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, WITHOUT
-* LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF
-* BUSINESS INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF OR
-* INABILITY TO USE THIS SOFTWARE, EVEN IF NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF
-* SUCH DAMAGES
-*/
-
-///-------------------------------------------------------------------------------
-///
-///  ppm.cpp -- Progressive photon mapping scene
-///
-///-------------------------------------------------------------------------------
-
 #include <optixu/optixpp_namespace.h>
 #include <GLUTDisplay.h>
 #include <sutil.h>
@@ -209,26 +183,6 @@ void getArea(float2 r_center, float r_radius, float2 t1, float2 t2, float2 t3, f
 	gpc_free_tristrip(&clip_polygon);
 }
 
-
-
-int OptiXDeviceToCUDADevice( const Context& context, unsigned int optixDeviceIndex )
-{
-  std::vector<int> devices = context->getEnabledDevices();
-  unsigned int numOptixDevices = static_cast<unsigned int>( devices.size() );
-  int ordinal;
-  if ( optixDeviceIndex < numOptixDevices )
-  {
-    context->getDeviceAttribute( devices[optixDeviceIndex], RT_DEVICE_ATTRIBUTE_CUDA_DEVICE_ORDINAL, sizeof(ordinal), &ordinal );
-    return ordinal;
-  }
-  return -1;
-}
-///-----------------------------------------------------------------------------
-///
-/// Whitted Scene
-///
-///-----------------------------------------------------------------------------
-
 static char* TestSceneNames[] = {
 	"Cornel_Box_Scene",
 	"Wedding_Ring_Scene",
@@ -314,16 +268,6 @@ public:
 		EChess_Scene,
 	};
 private:
-	void initWeddingRing(InitialCameraData& camera_data);
-	void initConference(InitialCameraData& camera_data);
-	void initCornelBox(InitialCameraData& camera_data);
-	void initSponza(InitialCameraData& camera_data);
-	void initSmallRoom(InitialCameraData& camera_data);
-	void initClock(InitialCameraData& camera_data);
-	void initBox(InitialCameraData& camera_data);
-	void initSibenik(InitialCameraData& camera_data);
-	void initTorus(InitialCameraData& camera_data);
-	void initEChess(InitialCameraData& camera_data);
 	void loadScene(InitialCameraData& camera_data);
 	void buildGlobalPhotonMap();
 	void buildCausticsPhotonMap();
@@ -689,359 +633,6 @@ void ProgressivePhotonScene::loadScene(InitialCameraData& camera_data) {
 	loadObjGeometry(modelConfig["filename"].as<std::string>(), aabb, true);
 
 }
-void ProgressivePhotonScene::initConference(InitialCameraData& camera_data)
-{
-	camera_data = InitialCameraData( make_float3( -0.519556, 0.119797, -0.591875 ), /// eye
-		make_float3( 0, 0, 0 ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		60.0f );                              /// vfov
-	
-	m_light.is_area_light = 1; 
-	float3 relate_position = make_float3(0.f, 0.f, 0.f);
-	m_light.position = make_float3( 0.0f, 0.241f, 0.0f ) + relate_position;
-	m_light.anchor = make_float3( 0.0f, 0.2405f, 0.0f ) + relate_position;
-	float point_size = 0.08f;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size * 2.8;
-	m_light.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size;
-
-
-/// 	m_light.position = m_light.position/0.00073911418 + make_float3(332.84030 ,323.75006 ,-193.58344);
-/// 	m_light.anchor = m_light.anchor/0.00073911418 + make_float3(332.84030 ,323.75006 ,-193.58344);
-/// 	m_light.v1 /= 0.00073911418;
-/// 	m_light.v2 /= 0.00073911418;
-
-	m_light.direction = normalize( m_light.anchor  - m_light.position );
-	m_light.radius    = 0.1f * 0.01745329252f;
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-
-	float default_radius2 = 0.0016f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/conference/conference.obj", aabb, true);
-}
-void ProgressivePhotonScene::initWeddingRing(InitialCameraData& camera_data)
-{
-	camera_data = InitialCameraData(
-		///make_float3( -235.0f, 0.0f, 0.0f ), /// eye
-		make_float3( -235.0f, 220.0f, 0.0f ), /// eye
-		///make_float3( -235.0f, 22.0f, -235.0f ), /// eye
-		make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		35.0f );                              /// vfov
-	m_light.is_area_light = 0; 
-	m_light.position  = 1000.0f * sphericalToCartesian( m_light_theta, m_light_phi );
-	std::cerr << m_light.position.x << " " << m_light.position.y << " " << m_light.position.z << std::endl;
-	///light.position = make_float3( 600.0f, 500.0f, 700.0f );
-	m_light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - m_light.position );
-	m_light.radius    = 5.0f *0.01745329252f;
-	m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-	///float default_radius2 = 1.0f;
-	///float default_radius2 = 16.0f;
-	///float default_radius2 = 4.0f;
-	float default_radius2 = 0.81f;
-	///float default_radius2 = 0.64f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;
-	loadObjGeometry( "scenes/wedding-band/wedding-band.obj", aabb, false);		
-}
-void ProgressivePhotonScene::initCornelBox(InitialCameraData& camera_data)
-{
-	createCornellBoxGeometry();
-	/// Set up camera
-	camera_data = InitialCameraData( make_float3( 278.0f, 273.0f, -850.0f ), /// eye
-		make_float3( 278.0f, 273.0f, 0.0f ),    /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),       /// up
-		35.0f );                                /// vfov
-
-	m_light.is_area_light = 1; 
-	m_light.anchor = make_float3( 343.0f, 548.6f, 227.0f);
-	m_light.v1     = make_float3( 0.0f, 0.0f, 105.0f);
-	m_light.v2     = make_float3( -130.0f, 0.0f, 0.0f);
-	m_light.direction = normalize(cross( m_light.v1, m_light.v2 ) ); 
-	m_light.power  = make_float3( 0.5e6f, 0.4e6f, 0.2e6f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-	float default_radius2 = 900.0f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	///m_context["rtpass_default_radius2"]->setFloat( 100.0f);
-	///m_context["rtpass_default_radius2"]->setFloat( 9.0f);
-	///m_context["min_fovy"]->setFloat( tanf(40.0f/180.0f*M_PI/HEIGHT*2) );
-	m_context["min_fovy"]->setFloat( tanf(10.0f/180.0f*M_PI/HEIGHT*2) );
-	m_context["max_radius2"]->setFloat(default_radius2);
-}
-void ProgressivePhotonScene::initSponza(InitialCameraData& camera_data)
-{
-/// 	camera_data = InitialCameraData( make_float3( -0.6f, 0.0f, 0.0f ), /// eye
-/// 		make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		35.0f );                              /// vfov
-
-/// 	camera_data = InitialCameraData( make_float3( 0.f, 0.25f, 0.0f ), /// eye
-/// 		make_float3( -0.6f, 0.25f, 0.0f ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		35.0f );                              /// vfov
-
-/// 	camera_data = InitialCameraData( make_float3( 0.4f, -0.05f, 0.0f ), /// eye
-/// 		make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		35.0f );                              /// vfov
-
-
-	///camera_data = InitialCameraData( make_float3( -0.4f, -0.05f, 0.0f ), /// eye
-	///camera_data = InitialCameraData( make_float3( -0.340745f, 0.001279f, -0.306309f ), /// eye
-	camera_data = InitialCameraData( make_float3( -0.462603f, 0.204225f, -0.0165347f ), /// eye
-		make_float3( 0.f, 0.0f, 0.0f ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		35.0f );                              /// vfov
-
-/// 	camera_data = InitialCameraData( make_float3( -0.5449f, 0.0006f, -0.0132f ), /// eye
-/// 		make_float3( -0.5f, 0.0f, 0.0f ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		35.0f );                              /// vfov
-	
-	/*
-	m_light.is_area_light = 0; 
-	///m_light.position  = 1000.0f * sphericalToCartesian( m_light_theta, m_light_phi );
-	m_light.position = make_float3( 0.0f, 0.47f, 0.0f );	
-	*/
-
-	m_light.is_area_light = 1; 
-	m_light.position = make_float3( 0.0f, 0.47f, 0.0f );
-	m_light.anchor = make_float3( 0.0f, 0.45f, 0.0f );
-	///float point_size = 0.03f;
-	float point_s_size = 2.1f;
-	float point_size1 = 0.28f * point_s_size;
-	float point_size2 = 0.06f * point_s_size;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size1;
-	m_light.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size2;
-	
-	m_light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - m_light.position );
-	m_light.radius    = 2.0f * 0.01745329252f;
-	///m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-	float default_radius2 = 0.0016f;
-	///float default_radius2 = 0.0001f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-
-	optix::Aabb aabb;	
-	///loadObjGeometry( "sponza/c-sponza/c-sponza.obj", aabb, true);
-	///loadObjGeometry( "sponza/m-sponza/sponza.obj", aabb, true);
-	///loadObjGeometry( "sponza/gong-sponza/gong.obj", aabb, true);
-	///loadObjGeometry( "sponza/gong-sponza/gong2.obj", aabb, true);
-
-	///loadObjGeometry( "sponza/gong-sponza/gong3.obj", aabb, true);
-	///loadObjGeometry( "sponza/gong-sponza/gong4.obj", aabb, true);
-	///loadObjGeometry( "sponza/gong-sponza/gong6.obj", aabb, true);
-	//loadObjGeometry( "scenes/sponza/88888888/0000000.obj", aabb, true);
-	loadObjGeometry( "scenes/sponza/sponza.obj", aabb, true);	
-}
-void ProgressivePhotonScene::initSmallRoom(InitialCameraData& camera_data)
-{
-	//camera_data = InitialCameraData(make_float3(0.380478f, 0.267474f, 0.0291848f), /// eye
-		camera_data = InitialCameraData(make_float3(0.0583623f, -0.0303101f, 0.207887f), /// eye
-		make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-		make_float3( 0.0f, 0.0f,  1.0f ),     /// up
-		35.0f );                              /// vfov
-		
-	m_light.is_area_light = 1; 
-	m_light.position = make_float3( 0.0f, 0.f, 0.2401f);
-	m_light.anchor = make_float3( 0.0f, 0.f, 0.24f);
-	float point_size = 0.11f;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size;
-	m_light.v2 = make_float3( 0.0f, 1.f, 0.0f ) * point_size;
-	m_light.direction = normalize( m_light.anchor  - m_light.position );
-	m_light.radius    = 0.1f * 0.01745329252f;
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-	///float default_radius2 = 0.0004f;
-	float default_radius2 = 0.0001f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/smallroom/smallroom.obj", aabb, true);
-
-}
-void ProgressivePhotonScene::initEChess(InitialCameraData& camera_data) {
-	camera_data = InitialCameraData(make_float3(0.0583623f, -0.0303101f, 0.207887f), /// eye
-		make_float3(0.0f, 0.0f, 0.0f),      /// lookat
-		make_float3(0.0f, 0.0f, 1.0f),     /// up
-		35.0f);                              /// vfov
-
-	m_light.is_area_light = 1;
-	m_light.position = make_float3(0.0f, 0.f, 0.2401f);
-	m_light.anchor = make_float3(0.0f, 0.f, 0.24f);
-	m_light.direction = normalize(m_light.anchor - m_light.position);
-	if (m_light.is_area_light) {
-		float point_size = 0.11f;
-		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size;
-		m_light.v2 = make_float3(0.0f, 1.f, 0.0f) * point_size;
-
-		float3 m_light_t_normal;
-		m_light_t_normal = cross(m_light.v1, m_light.direction);
-		m_light.v1 = cross(m_light.direction, m_light_t_normal);
-		m_light_t_normal = cross(m_light.v2, m_light.direction);
-		m_light.v2 = cross(m_light.direction, m_light_t_normal);
-	}
-	m_light.radius = 0.1f * 0.01745329252f;
-	m_light.power = make_float3(1.0f, 1.0f, 1.0f);
-	m_context["light"]->setUserData(sizeof(PPMLight), &m_light);
-
-	float default_radius2 = 0.0001f;
-	m_context["rtpass_default_radius2"]->setFloat(default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;
-	loadObjGeometry("scenes/EChess/EChess.obj", aabb, true);
-}
-void ProgressivePhotonScene::initTorus(InitialCameraData& camera_data)
-{
-	camera_data = InitialCameraData( make_float3(0.93709, 0.068026, 1.17512), /// eye
-		make_float3(0, -0.35, 0 ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		30.0f );                              /// vfov
-
-	m_light.is_area_light = 1; 
-	m_light.position = make_float3(0.25, 0.125, -0.2);			/// Current Myron
-	m_light.direction = normalize(make_float3(0, -0.3, 0) - m_light.position);
-	std::cerr << m_light.direction.x << " " << m_light.direction.y << " " << m_light.direction.z << std::endl;
-	m_light.anchor = m_light.position + m_light.direction * 0.01f;
-	std::cerr << m_light.anchor.x << " " <<  m_light.anchor.y << " " << m_light.anchor.z << std::endl;
-
-	if (m_light.is_area_light) {
-		float point_size = 0.01f;
-		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size;
-		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
-
-		float3 m_light_t_normal;
-		m_light_t_normal = cross(m_light.v1, m_light.direction);
-		m_light.v1 = cross(m_light.direction, m_light_t_normal);
-		m_light.v2 = cross(m_light.direction, m_light.v1);
-	}
-
-	m_light.radius    = 2.0f * 0.01745329252f;
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-	float default_radius2 = 0.0001f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/torus/torus_maya.obj", aabb, true);
-}
-void ProgressivePhotonScene::initSibenik(InitialCameraData& camera_data)
-{
-	camera_data = InitialCameraData( make_float3( 0.9*0.878701, -0.592016, 0.025917 ), /// eye
-		make_float3(-0.184200, -0.576028, 0.074177 ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		54.0f );                              /// vfov
-/// 	camera_data = InitialCameraData( make_float3( 0.736435, -0.214608, 0.121045 ), /// eye
-/// 		///camera_data = InitialCameraData( make_float3( -0.07f, -0.65f, 0.0f ), /// eye
-/// 		make_float3(-0.184200, -0.576028, 0.074177 ),      /// lookat
-/// 		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-/// 		54.0f );                              /// vfov
-	
-	m_light.is_area_light = 0; 
-	///m_light.position  = 1000.0f * sphericalToCartesian( m_light_theta, m_light_phi );
-	m_light.position = make_float3( 0.f, 0.f, 0.0f );	
-
-	m_light.is_area_light = 1; 
-	float point_size = 0.05f;
-	///float point_size = 0.5f;
-	m_light.v1 = make_float3( 1.0f, 0.f, 0.0f ) * point_size * 2;
-	m_light.v2 = make_float3( 0.0f, 0.f, 1.0f ) * point_size;
-	m_light.position = make_float3( -0.184200, -0.192016, 0.025917 );
-	m_light.anchor = make_float3( -0.184200, -0.2, 0.025917 );
-
-/// 	m_light.position = make_float3( 0.0, 0.929057, -1.01377 );
-/// 	m_light.anchor = m_light.position * 0.90f + make_float3(0.0, -0.5, 0);
-	m_light.direction = normalize( m_light.anchor  - m_light.position );
-
-	float3 m_light_t_normal;
-	m_light_t_normal = cross(m_light.v1, m_light.direction);
-	m_light.v1 = cross(m_light.direction, m_light_t_normal);
-	m_light_t_normal = cross(m_light.v2, m_light.direction);
-	m_light.v2 = cross(m_light.direction, m_light_t_normal);
-
-	m_light.radius    = 2.0f * 0.01745329252f;
-	///m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-	///float default_radius2 = 0.0016f;
-	float default_radius2 = 0.0009f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/sibenik/sibenik.obj", aabb, true);
-}
-void ProgressivePhotonScene::initBox(InitialCameraData& camera_data)
-{
-	std::string full_path = std::string(sutilSamplesDir()) + "/progressivePhotonMap/" + "scenes/box/box.yaml";
-	YAML::Node modelConfig = YAML::LoadFile(full_path);
-	YAML::Node cameraData = modelConfig["camera_data"][0];
-	vector<double> eye = cameraData["eye"].as<vector<double> >();
-	vector<double> lookat = cameraData["lookat"].as<vector<double> >();
-	vector<double> up = cameraData["up"].as<vector<double> >();
-	double vfov = cameraData["vfov"].as<double>();
-	camera_data = InitialCameraData( make_float3( eye[0], eye[1], eye[2] ), /// eye
-		make_float3( lookat[0], lookat[1], lookat[2] ),      /// lookat
-		make_float3( up[0], up[1], up[2] ),     /// up
-		vfov );                              /// vfov
-	m_light.is_area_light = 1; 
-	m_light.anchor = make_float3( 0.323573717848716, 0.41, 0.494796481472676 );
-	m_light.direction = make_float3( 0.0f, -1.0f, 0.0f );
-	m_light.position = m_light.anchor - m_light.direction * 0.00001f;
-
-	if (m_light.is_area_light) {
-		float point_size = 0.02f * 0.1;
-		m_light.v1 = make_float3(1.0f, 0.f, 0.0f) * point_size * 2;
-		m_light.v2 = make_float3(0.0f, 0.f, 1.0f) * point_size;
-
-		float3 m_light_t_normal;
-		m_light_t_normal = cross(m_light.v1, m_light.direction);
-		m_light.v1 = cross(m_light.direction, m_light_t_normal);
-		m_light_t_normal = cross(m_light.v2, m_light.direction);
-		m_light.v2 = cross(m_light.direction, m_light_t_normal);
-	}
-	m_light.radius    = 2.0f * 0.01745329252f;
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-
-	float default_radius2 = 0.001f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/box/box.obj", aabb, true);
-}
-void ProgressivePhotonScene::initClock(InitialCameraData& camera_data)
-{
-	camera_data = InitialCameraData( make_float3( 0.6f, -0.05f, 0.0f ), /// eye
-		make_float3( 0.0f, 0.0f, 0.0f ),      /// lookat
-		make_float3( 0.0f, 1.0f,  0.0f ),     /// up
-		35.0f );                              /// vfov
-	m_light.is_area_light = 0; 
-	//m_light.position  = 1000.0f * sphericalToCartesian( m_light_theta, m_light_phi );
-	m_light.position = make_float3( 0.0f, 0.47f, 0.0f );
-	m_light.direction = normalize( make_float3( 0.0f, 0.0f, 0.0f )  - m_light.position );
-	m_light.radius    = 0.1f * 0.01745329252f;
-	//m_light.power     = make_float3( 0.5e4f, 0.5e4f, 0.5e4f );
-	m_light.power     = make_float3( 1.0f, 1.0f, 1.0f );
-	m_context["light"]->setUserData( sizeof(PPMLight), &m_light );
-	float default_radius2 = 0.001f;
-	m_context["rtpass_default_radius2"]->setFloat( default_radius2);
-	m_context["max_radius2"]->setFloat(default_radius2);
-	optix::Aabb aabb;	
-	loadObjGeometry( "scenes/clocks/clocks.obj", aabb, true);
-}
-
 void ProgressivePhotonScene::initGlobal() {
 
 	cuda_gather_cu = "ppm_gather.cu";
@@ -1440,7 +1031,6 @@ bool cmpPhotonRecord (const PhotonRecord * a, const PhotonRecord *b)
 	return a->pad.z < b->pad.z;
 }
 
-// ��CPU�˼���voronoi��Ԫ������������������ͼ��KD-tree
 void ProgressivePhotonScene::buildGlobalPhotonMap()
 {
 	double t0, t1;
@@ -2366,7 +1956,6 @@ GeometryInstance ProgressivePhotonScene::createParallelogram( const float3& anch
 	return gi;
 }
 
-
 void ProgressivePhotonScene::loadObjGeometry( const std::string& filename, optix::Aabb& bbox, bool isUnitize )
 {
 	///// Set up material
@@ -2407,7 +1996,6 @@ void ProgressivePhotonScene::loadObjGeometry( const std::string& filename, optix
 	m_context["top_object"]->set( geometry_group );
 	m_context["top_shadower"]->set( geometry_group );
 }
-
 
 void ProgressivePhotonScene::createCornellBoxGeometry()
 {
@@ -2528,14 +2116,6 @@ void ProgressivePhotonScene::createCornellBoxGeometry()
 	m_context["top_shadower"]->set( geometry_group );
 }
 
-
-///-----------------------------------------------------------------------------
-///
-/// Main driver
-///
-///-----------------------------------------------------------------------------
-
-
 void printUsageAndExit( const std::string& argv0, bool doExit = true )
 {
 	std::cerr
@@ -2573,38 +2153,19 @@ int main( int argc, char** argv )
 
 	std::string model = "box";
 
-	for ( int i = 1; i < argc; ++i ) {
-		std::string arg( argv[i] );
-		if ( arg == "--help" || arg == "-h" ) {
-			printUsageAndExit( argv[0] );
-		} else if ( arg == "--print-timings" || arg == "-pt" ) {
-			print_timings = true;
-		} else if ( arg == "--model" ) { 
+	for (int i = 1; i < argc; ++i) {
+		std::string arg(argv[i]);
+		if (arg == "--model") {
 			if (++i < argc) {
-				std::string arg( argv[i] );
+				std::string arg(argv[i]);
 				model = arg;
-			} else {
+			}
+			else {
 				std::cerr << "Missing argument to " << arg << "\n";
 				printUsageAndExit(argv[0]);
 			}
-		} else if (arg == "--display-debug-buffer" || arg == "-ddb") {
-			display_debug_buffer = true;
-		} else if ( arg == "--cornell-box" || arg == "-c" ) {
-			cornell_box = true;
-		} else if ( arg == "--timeout" || arg == "-t" ) {
-			if(++i < argc) {
-				timeout = static_cast<float>(atof(argv[i]));
-			} else {
-				std::cerr << "Missing argument to "<<arg<<"\n";
-				printUsageAndExit(argv[0]);
-			}
-		} else {
-			std::cerr << "Unknown option: '" << arg << "'\n";
-			printUsageAndExit( argv[0] );
 		}
 	}
-	
-	// if( !GLUTDisplay::isBenchmark() ) printUsageAndExit( argv[0], false );  // ����������Ϣ
 
 	if (timeout < 0.0) timeout = 1000;
 
