@@ -3,14 +3,13 @@ camera_data:
   lookat: [0.0, -0.05, 0.25]
   up: [0.0, 1.0, 0.0]
   vfov: 35.0
-m_light:
+light_data:
   is_area_light: 1
   anchor: [0.323573717848716, 0.41, 0.494796481472676]
   direction: [0.0, -1.0, 0.0]
   position: null
-  point_size: 0.002
-  v1: [2.0, 0.0, 0.0]
-  v2: [0.0, 0.0, 1.0]
+  v1: 0.004
+  v2: 0.002
   radius: 0.03490658504 
   power: [1.0, 1.0, 1.0]
 default_radius: 0.001

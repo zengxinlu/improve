@@ -10,9 +10,9 @@ camera_data:
 m_light:
   - is_area_light: 0
     space:
-      - anchor: null
+      - anchor: [0.0, 0.0, 0.0]
         position: [0.0, 0.47, 0.0]
-        direction: [0.0, -0.47, 0.0] 
+        direction: null
     radius: 0.001745329252 
     power: 
       - [1.0, 1.0, 1.0]
