@@ -37,7 +37,7 @@ m_light:
     power: 
       - [1.0, 1.0, 1.0]
       - [5000, 5000, 5000]
-default_radius": 
+default_radius: 
   - 0.001
   - 0.01
   - 0.001
